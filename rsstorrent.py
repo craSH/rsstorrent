@@ -27,6 +27,7 @@
 import feedparser
 import pickle
 import os
+import sys
 import urllib2
 import yaml
 from datetime import datetime
@@ -62,7 +63,8 @@ def read_config(settings):
     rsstorrent_yaml = '%s/.config/rsstorrent/rsstorrent.yaml' % home_dir
 
     if not os.path.isfile(rsstorrent_yaml):
-        raise Exception("Configuration file [%s] does not exist" % rsstorrent_yaml)
+        print("Configuration file [%s] does not exist" % rsstorrent_yaml)
+        sys.exit(1)
 
     try:
         f = file(rsstorrent_yaml, 'r')
@@ -89,22 +91,30 @@ def download(settings, url):
     if not isinstance(settings, rsstorrent_settings):
         raise Exception("Improper settings object provided")
 
-    remote_file = urllib2.urlopen(url)
+    try:
+        remote_file = urllib2.urlopen(url)
+    except urllib2.URLError as e:
+        raise Exception("Unable to open URL: %s" % str(e))
 
     # if this isn't a torrent file (probably from mininova) add a .torrent
     # extension
     if url[-7:] != "torrent":
         url += ".torrent"
 
-    local_file = open('%s%s' % (settings.download_dir, url.split('/')[-1]), 'w')
-    local_file.write(remote_file.read())
-    local_file.close()
-    remote_file.close()
+    try:
+        local_file = open('%s%s' % (settings.download_dir, url.split('/')[-1]), 'w')
+        local_file.write(remote_file.read())
+    except urllib2.HTTPError as e:
+        raise Exception("Unable to open URL: %s" % str(e))
+    except Exception as e:
+        raise Exception("Unable to save torrent: %s" % str(e))
+    finally:
+        local_file.close()
+        remote_file.close()
 
 # Build up a list of torrents to check
 settings = rsstorrent_settings()
 read_config(settings)
-print "DEBUG: Download dir: %s\nFeeds: %s" % (settings.download_dir, settings.feeds)
 for feed_url in settings.feeds:
     feed = feedparser.parse(feed_url)
 
