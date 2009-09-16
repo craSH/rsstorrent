@@ -1,6 +1,6 @@
 ---
-download_dir: /home/USER/torrents
-timestamp: /tmp/.USER-rsstorrent_timestamp
+download_dir: <%HOME>/Downloads/
+timestamp: <%HOME%>/.config/rsstorrent/timestamp
 verbose: Yes
 feeds:
 - http://someserver.tld/torrentfeed.rss

@@ -26,7 +26,7 @@ On Mac you need to install mac ports (http://www.macports.org then install py-fe
 
 Finally, you need to create the configuration directory and file. A sample configuration file is provided, place it in ${HOME}/.config/rsstorrent/rsstorrent.yaml
 
-In the rsstorrent.yaml file, modify the download_dir, timestamp, verbose, and feeds settings as you wish.
+In the rsstorrent.yaml file, modify the download_dir, timestamp, verbose, and feeds settings as you wish. You may use the special placeholder <%HOME%>, which will be replaced with your home directory.
 
 Run with python ./rsstorrent.py
 
