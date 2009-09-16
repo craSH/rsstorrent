@@ -85,13 +85,11 @@ def read_config(settings):
 
     # Replace <%HOME%> with user's home dir from config if it's in any paths
     # TODO - use a real templating engine if this gets out of hand
-    if os.environ.has_key('HOME'):
-        home_dir = os.environ['HOME']
-        if settings.timestamp.find('<%HOME%>') > -1:
-            settings.timestamp = settings.timestamp.replace('<%HOME%>', home_dir)
+    if settings.timestamp.find('<%HOME%>') > -1:
+        settings.timestamp = settings.timestamp.replace('<%HOME%>', home_dir)
 
-        if settings.download_dir.find('<%HOME%>') > -1:
-            settings.download_dir = settings.download_dir.replace('<%HOME%>', home_dir)
+    if settings.download_dir.find('<%HOME%>') > -1:
+        settings.download_dir = settings.download_dir.replace('<%HOME%>', home_dir)
 
 
 def download(settings, url):
