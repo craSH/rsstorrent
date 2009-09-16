@@ -191,3 +191,5 @@ if not feed_bad and len(items) > 0:
         if settings.verbose:
             print "Cannot stamp file %s" % settings.timestamp
 
+    finally:
+        timestamp_file.close()
