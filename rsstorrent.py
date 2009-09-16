@@ -21,13 +21,8 @@
 # List of url feeds to be parsed. This entry is just an _example_. Please
 # do not download illegal torrents or torrents that you do not have permisson
 # to own.
-FEEDS = [
-	   "http://somefeedurl.com",
-	]
-	
-DOWNLOAD_DIR = "/home/jamie/downloads/torrents/"
-TIMESTAMP    = "/home/jamie/downloads/rsstorrent.stamp"
-VERBOSE      = True
+
+
 
 import feedparser
 import pickle
@@ -39,24 +34,41 @@ items = []
 feed_bad = False
 current_file = " "
 
-def download(url):
+class rsstorrent_settings(object):
+    """
+    A class to hold settings which need to be passed around
+    """
+
+    feeds = []
+
+    download_dir = ''
+    timestamp = ''
+    verbose = True
+
+def download(settings, url):
     """Copy the contents of a file from a given URL
     to a local file.
     """
+
+    if not isinstance(settings, rsstorrent_settings):
+        raise Exception("Improper settings object provided")
+
     remote_file = urllib2.urlopen(url)
-    
+
     # if this isn't a torrent file (probably from mininova) add a .torrent
     # extension
     if url[-7:] != "torrent":
         url += ".torrent"
-        
-    local_file = open('%s%s' % (DOWNLOAD_DIR, url.split('/')[-1]), 'w')
+
+    local_file = open('%s%s' % (settings.download_dir, url.split('/')[-1]), 'w')
     local_file.write(remote_file.read())
     local_file.close()
     remote_file.close()
 
 # Build up a list of torrents to check
-for feed_url in FEEDS: 
+settings = rsstorrent_settings()
+print "DEBUG: Download dir: %s\nFeeds: %s" % (settings.download_dir, settings.feeds)
+for feed_url in settings.feeds:
     feed = feedparser.parse(feed_url)
 
     # Valid feed ?
@@ -64,9 +76,9 @@ for feed_url in FEEDS:
         for item in feed["items"]:
             items.append((item["date_parsed"], item))
     else:
-        if VERBOSE:    
+        if settings.verbose:
             print "bad feed: " + feed_url
-            
+
         feed_bad = True
 
 timestamp_file = " "
@@ -75,18 +87,19 @@ timestamp_file = " "
 last_check_date = datetime.today()
 
 # Check to read the stamp file to see when we last checked for new torrents
-try:
-    timestamp_file = open(TIMESTAMP, 'r')
-except IOError:
-    if VERBOSE:
-        print "Cannot open stamp file %s" % TIMESTAMP
+if os.path.isfile(settings.timestamp):
+    try:
+        timestamp_file = open(settings.timestamp, 'r')
+    except IOError:
+        if settings.verbose:
+            print "Cannot open stamp file %s" % settings.timestamp
 
 if timestamp_file != " ":
     try:
         last_check_date = pickle.load(timestamp_file)
     except EOFError:
-        if VERBOSE:
-            print "Stamp file %s is empty" % TIMESTAMP
+        if settings.verbose:
+            print "Stamp file %s is empty" % settings.timestamp
 
 # Sort by date
 items.sort();
@@ -99,26 +112,26 @@ for item in items:
     item_date = datetime(id[0], id[1], id[2], id[3], id[4])
 
     if item_date > last_check_date:
-        if VERBOSE:
+        if settings.verbose:
             print "downloading: " + item[1]["link"] 
-            print "    and saving to: %s" % DOWNLOAD_DIR
-   
-        download(item[1]["link"].encode('unicode_escape'))
+            print "    and saving to: %s" % settings.download_dir
+
+        download(settings, item[1]["link"].encode('unicode_escape'))
         downloaded_torrent = True
 
 if downloaded_torrent == False:
-    if VERBOSE:
+    if settings.verbose:
         print "No new torrents to download"
 
 if not feed_bad and len(items) > 0:
    # stamp the timestamp file
     try:
-        timestamp_file = open(TIMESTAMP, 'w')
+        timestamp_file = open(settings.timestamp, 'w')
         last_item = items[len(items)-1][0]
         last_item_date = datetime(last_item[0], last_item[1], last_item[2], last_item[3], last_item[4])
         pickle.dump(last_item_date, timestamp_file)
 
     except IOError:
-        if VERBOSE:
-            print "Cannot stamp file %s" % TIMESTAMP
+        if settings.verbose:
+            print "Cannot stamp file %s" % settings.timestamp
 
