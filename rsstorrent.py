@@ -28,7 +28,8 @@ import feedparser
 import pickle
 import os
 import urllib2
-from datetime import datetime 
+import yaml
+from datetime import datetime
 
 items = []
 feed_bad = False
@@ -44,6 +45,41 @@ class rsstorrent_settings(object):
     download_dir = ''
     timestamp = ''
     verbose = True
+
+def read_config(settings):
+    """
+    Read rsstorrent config settings
+    Populate settings.download_dir, settings.timestamp, settings.verbose
+    """
+
+    if not isinstance(settings, rsstorrent_settings):
+        raise Exception("Improper settings object provided")
+
+    if not os.environ.has_key('HOME'):
+        raise Exception("Must have a valid home directory")
+
+    home_dir = os.environ['HOME']
+    rsstorrent_yaml = '%s/.config/rsstorrent/rsstorrent.yaml' % home_dir
+
+    if not os.path.isfile(rsstorrent_yaml):
+        raise Exception("Configuration file [%s] does not exist" % rsstorrent_yaml)
+
+    try:
+        f = file(rsstorrent_yaml, 'r')
+        options = yaml.load(f)
+    except Exception as e:
+        raise Exception("Failed to load rsstorrent yaml configuration file: %s" % str(e))
+    finally:
+        f.close()
+
+    try:
+        settings.download_dir = options['download_dir']
+        settings.timestamp = options['timestamp']
+        settings.verbose = options['verbose']
+        settings.feeds = options['feeds']
+    except Exception as e:
+        raise Exception("Failed loading configuration data from Yaml file: %s" % str(e))
+
 
 def download(settings, url):
     """Copy the contents of a file from a given URL
@@ -67,6 +103,7 @@ def download(settings, url):
 
 # Build up a list of torrents to check
 settings = rsstorrent_settings()
+read_config(settings)
 print "DEBUG: Download dir: %s\nFeeds: %s" % (settings.download_dir, settings.feeds)
 for feed_url in settings.feeds:
     feed = feedparser.parse(feed_url)
