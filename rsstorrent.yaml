@@ -1,0 +1,7 @@
+---
+download_dir: /home/USER/torrents
+timestamp: /tmp/.USER-rsstorrent_timestamp
+verbose: Yes
+feeds:
+- http://someserver.tld/torrentfeed.rss
+- http://anotherserver.tld/torrents?mode=rss
