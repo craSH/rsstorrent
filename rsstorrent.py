@@ -45,7 +45,7 @@ class rsstorrent_settings(object):
 
     download_dir = ''
     timestamp = ''
-    verbose = True
+    verbose = False
 
 def read_config(settings):
     """
@@ -158,8 +158,8 @@ if timestamp_file != " ":
             print "Stamp file %s is empty" % settings.timestamp
 
 # Sort by date
-items.sort();
-
+items.sort()
+new_items = []
 downloaded_torrent = False
 
 for item in items:
@@ -168,16 +168,28 @@ for item in items:
     item_date = datetime(id[0], id[1], id[2], id[3], id[4])
 
     if item_date > last_check_date:
-        if settings.verbose:
-            print "downloading: " + item[1]["link"] 
-            print "    and saving to: %s" % settings.download_dir
+        new_items.append(item)
 
-        download(settings, item[1]["link"].encode('unicode_escape'))
+if len(new_items) > 0:
+    download_msg = "[%s] Downloading %d torrents [" % (str(datetime.now()), len(new_items))
+    # Prepare the status message
+    for torrent in new_items:
+        download_msg += "%s " % torrent[1]["link"]
+    download_msg = download_msg[:-1] + "]"
+
+    # Display and download the torrents
+    print download_msg,
+    for torrent in new_items:
+        download(settings, torrent[1]["link"].encode('unicode_escape'))
         downloaded_torrent = True
+
 
 if downloaded_torrent == False:
     if settings.verbose:
-        print "No new torrents to download"
+        print "[%s] No new torrents to download" % str(datetime.now())
+
+if len(new_items) > 0:
+    print ""
 
 if not feed_bad and len(items) > 0:
    # stamp the timestamp file
@@ -189,7 +201,7 @@ if not feed_bad and len(items) > 0:
 
     except IOError:
         if settings.verbose:
-            print "Cannot stamp file %s" % settings.timestamp
+            print "ERROR: Cannot stamp file %s" % settings.timestamp
 
     finally:
         timestamp_file.close()
